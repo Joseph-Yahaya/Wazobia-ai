@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wazobia — Voter information for everyone</title>
+  <meta name="description" content="Accessible voter information assistant: text, voice, and camera hand-pose answers from an approved FAQ corpus. AI4Elections Hackathon, Track 3.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to main content</a>
+
+  <header class="site-header">
+    <div class="wrap header-row">
+      <div>
+        <p class="brand">Wazobia</p>
+        <p class="tagline">Voter information for everyone — Track 3 prototype</p>
+      </div>
+      <div class="settings" role="group" aria-label="Display and language settings">
+        <label class="setting" for="lang">Language
+          <select id="lang">
+            <option value="en">English</option>
+            <option value="pcm">Pidgin</option>
+            <option value="ha">Hausa (soon)</option>
+            <option value="yo">Yoruba (soon)</option>
+            <option value="ig">Igbo (soon)</option>
+          </select>
+        </label>
+        <button type="button" id="contrastToggle" aria-pressed="false">High contrast</button>
+        <button type="button" id="textToggle" aria-pressed="false">Large text</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    <nav class="tabs" aria-label="Input modes">
+      <button type="button" class="tab is-active" data-tab="ask" aria-controls="panel-ask" aria-selected="true">Type a question</button>
+      <button type="button" class="tab" data-tab="voice" aria-controls="panel-voice" aria-selected="false">Speak</button>
+      <button type="button" class="tab" data-tab="sign" aria-controls="panel-sign" aria-selected="false">Sign</button>
+    </nav>
+
+    <section id="panel-ask" class="panel" role="tabpanel" aria-label="Type a question" tabindex="0">
+      <form id="askForm">
+        <label for="question">Ask about registration, PVCs, voting day, results, or safety</label>
+        <div class="ask-row">
+          <input id="question" name="question" type="text" autocomplete="off"
+                 placeholder="Example: I no get PVC, I fit vote?">
+          <button type="submit">Ask</button>
+        </div>
+        <p class="hint">The assistant only answers from the approved FAQ list below. If it is unsure, it says so.</p>
+      </form>
+    </section>
+
+    <section id="panel-voice" class="panel" role="tabpanel" aria-label="Speak your question" tabindex="0" hidden>
+      <p id="voiceStatus" class="hint" role="status">Press and hold the button, speak your question, then release.</p>
+      <button type="button" id="talkButton" class="talk">Hold to talk</button>
+      <p class="hint">Heard: <span id="heard">—</span></p>
+    </section>
+
+    <section id="panel-sign" class="panel" role="tabpanel" aria-label="Sign mode" tabindex="0" hidden>
+      <p class="hint">Sign mode: hold your hand up to the camera and hold a pose steady for about a second.
+        These are simple pose shortcuts, not full sign language yet — full Nigerian Sign Language recognition is on the roadmap.</p>
+      <div class="camera-row">
+        <button type="button" id="cameraButton" aria-expanded="false">Start camera</button>
+        <p id="poseStatus" role="status" class="hint">Camera is off.</p>
+      </div>
+      <div id="cameraView" class="camera-view" hidden>
+        <video id="camVideo" playsinline muted></video>
+        <canvas id="camCanvas" aria-hidden="true"></canvas>
+      </div>
+      <ul class="pose-legend" aria-label="Pose shortcuts">
+        <li><strong>Fist</strong> — official information</li>
+        <li><strong>1 finger</strong> — voter registration</li>
+        <li><strong>2 fingers</strong> — PVC collection</li>
+        <li><strong>3 fingers</strong> — find polling unit</li>
+        <li><strong>4 fingers</strong> — election results</li>
+        <li><strong>5 fingers</strong> — spot fake messages</li>
+      </ul>
+      <p class="hint">No camera? Use the buttons below — each one asks a question directly.</p>
+      <div id="signChips" class="chips"></div>
+    </section>
+
+    <section aria-labelledby="answerHeading" class="answer-wrap">
+      <h2 id="answerHeading">Answer</h2>
+      <div id="answer" aria-live="polite" aria-atomic="true">
+        <p class="hint">No question asked yet.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="browseHeading">
+      <h2 id="browseHeading">Browse all approved questions</h2>
+      <ol id="faqList" class="faq-list"></ol>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p><strong>About these answers:</strong> questions come from the hackathon starter data (English and Pidgin).
+        Answers are team drafts and are <strong>not verified against official INEC publications</strong>.
+        Always confirm with an official INEC channel before acting. Hausa, Yoruba, and Igbo translations are pending native-speaker review.</p>
+      <p>Independent civic prototype. No INEC endorsement is implied.</p>
+    </div>
+  </footer>
+
+  <script type="module" src="app.mjs"></script>
+</body>
+</html>
