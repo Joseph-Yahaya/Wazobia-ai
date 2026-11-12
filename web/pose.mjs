@@ -52,3 +52,20 @@ export function classifyPose(lm) {
   const count = extended.filter(Boolean).length;
   return { count, extended, faqId: POSE_FAQ[count], label: POSE_LABELS[count] };
 }
+
+// MediaPipe GestureRecognizer canned gestures that genuinely match our
+// finger-count shortcuts. Other gestures (Thumb_Up, Thumb_Down, ILoveYou,
+// None) stay unassigned: shown, never guessed.
+export const GESTURE_COUNT = {
+  Closed_Fist: 0,
+  Pointing_Up: 1,
+  Victory: 2,
+  Open_Palm: 5,
+};
+
+export function gestureToPose(name) {
+  if (typeof name !== "string") return null;
+  const count = GESTURE_COUNT[name];
+  if (count === undefined) return null;
+  return { count, faqId: POSE_FAQ[count], label: POSE_LABELS[count] };
+}

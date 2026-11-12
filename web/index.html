@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Wazobia — Voter information for everyone</title>
-  <meta name="description" content="Accessible voter information assistant: text, voice, and camera hand-pose answers from an approved FAQ corpus. AI4Elections Hackathon, Track 3.">
-  <link rel="stylesheet" href="styles.css">
+  <title>Wazobia — your voter-info agent</title>
+  <meta name="description" content="Wazobia is an accessible voter-information agent: ask by typing, speaking, or signing. Answers come only from verified sources. AI4Elections Hackathon, Track 3.">
+  <!-- Asset versions: bump ?v=N + footer build stamp together each release. -->
+  <link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body>
   <a class="skip" href="#main">Skip to main content</a>
@@ -14,18 +15,10 @@
     <div class="wrap header-row">
       <div>
         <p class="brand">Wazobia</p>
-        <p class="tagline">Voter information for everyone — Track 3 prototype</p>
+        <p class="tagline">Your voter-info agent</p>
       </div>
+      <p id="aiStatus" class="ai-status"><span class="dot" aria-hidden="true"></span><span id="aiStatusText">Checking AI…</span></p>
       <div class="settings" role="group" aria-label="Display and language settings">
-        <label class="setting" for="lang">Language
-          <select id="lang">
-            <option value="en">English</option>
-            <option value="pcm">Pidgin</option>
-            <option value="ha">Hausa (soon)</option>
-            <option value="yo">Yoruba (soon)</option>
-            <option value="ig">Igbo (soon)</option>
-          </select>
-        </label>
         <button type="button" id="contrastToggle" aria-pressed="false">High contrast</button>
         <button type="button" id="textToggle" aria-pressed="false">Large text</button>
       </div>
@@ -33,75 +26,132 @@
   </header>
 
   <main id="main" class="wrap">
-    <nav class="tabs" aria-label="Input modes">
-      <button type="button" class="tab is-active" data-tab="ask" aria-controls="panel-ask" aria-selected="true">Type a question</button>
-      <button type="button" class="tab" data-tab="voice" aria-controls="panel-voice" aria-selected="false">Speak</button>
-      <button type="button" class="tab" data-tab="sign" aria-controls="panel-sign" aria-selected="false">Sign</button>
-    </nav>
-
-    <section id="panel-ask" class="panel" role="tabpanel" aria-label="Type a question" tabindex="0">
-      <form id="askForm">
-        <label for="question">Ask about registration, PVCs, voting day, results, or safety</label>
-        <div class="ask-row">
-          <input id="question" name="question" type="text" autocomplete="off"
-                 placeholder="Example: I no get PVC, I fit vote?">
-          <button type="submit">Ask</button>
+    <section class="stage" aria-label="Wazobia agent">
+      <div id="avatar" class="avatar" data-state="idle">
+        <svg id="avatarSvg" viewBox="0 0 200 300" role="img" aria-label="Wazobia agent avatar">
+          <ellipse cx="100" cy="284" rx="46" ry="9" class="av-shadow"/>
+          <ellipse cx="100" cy="150" rx="72" ry="112" class="av-halo" fill="none" stroke-width="4"/>
+          <g class="av-body">
+            <path d="M64 96 Q100 84 136 96 L156 276 Q100 290 44 276 Z" class="av-robe"/>
+            <rect x="95" y="104" width="10" height="164" rx="5" class="av-trim"/>
+            <path d="M84 92 Q100 102 116 92" class="av-neck" fill="none" stroke-width="4" stroke-linecap="round"/>
+            <g class="av-arms-down">
+              <path d="M64 100 Q52 140 54 182" fill="none" stroke-width="17" stroke-linecap="round" class="av-sleeve"/>
+              <circle cx="55" cy="192" r="10" class="av-hand"/>
+              <path d="M136 100 Q148 140 146 182" fill="none" stroke-width="17" stroke-linecap="round" class="av-sleeve"/>
+              <circle cx="145" cy="192" r="10" class="av-hand"/>
+            </g>
+            <g class="av-arm-up">
+              <path d="M64 100 Q52 140 54 182" fill="none" stroke-width="17" stroke-linecap="round" class="av-sleeve"/>
+              <circle cx="55" cy="192" r="10" class="av-hand"/>
+              <path d="M136 100 Q162 92 156 138" fill="none" stroke-width="17" stroke-linecap="round" class="av-sleeve"/>
+              <circle cx="155" cy="148" r="10" class="av-hand"/>
+            </g>
+            <g class="av-head">
+              <ellipse cx="100" cy="60" rx="25" ry="27" class="av-face"/>
+              <path d="M73 54 Q75 22 100 22 Q125 22 127 54 L120 47 Q118 30 100 30 Q82 30 80 47 Z" class="av-wrap"/>
+              <circle cx="100" cy="28" r="7" class="av-knot"/>
+              <ellipse cx="90" cy="58" rx="3.2" ry="4.2" class="av-eye"/>
+              <ellipse cx="110" cy="58" rx="3.2" ry="4.2" class="av-eye"/>
+              <path d="M84 48 L94 46" class="av-brow" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M106 46 L116 48" class="av-brow" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M90 74 Q100 82 110 74" class="av-mouth-closed" fill="none" stroke-width="3" stroke-linecap="round"/>
+              <ellipse cx="100" cy="77" rx="6" ry="7" class="av-mouth-open"/>
+            </g>
+          </g>
+        </svg>
+        <canvas id="avatarCanvas" width="600" height="800" hidden></canvas>
+      </div>
+      <p id="agentStatus" class="agent-status" role="status">Ready. Ask me about voting.</p>
+      <ol id="pipeline" class="pipeline" aria-label="Answer progress">
+        <li data-stage="ears">Ears</li>
+        <li data-stage="brain">Brain</li>
+        <li data-stage="voice">Voice</li>
+      </ol>
+      <div id="signStage" class="sign-overlay" hidden>
+        <canvas id="signCanvas" width="320" height="240" aria-hidden="true"></canvas>
+        <div class="sign-info">
+          <p id="signLetter" class="sign-letter" aria-hidden="true">–</p>
+          <p id="signProgress" class="sign-progress" aria-hidden="true"></p>
+          <p id="signCaption" class="sign-caption"></p>
         </div>
-        <p class="hint">The assistant only answers from the approved FAQ list below. If it is unsure, it says so.</p>
-      </form>
-    </section>
-
-    <section id="panel-voice" class="panel" role="tabpanel" aria-label="Speak your question" tabindex="0" hidden>
-      <p id="voiceStatus" class="hint" role="status">Press and hold the button, speak your question, then release.</p>
-      <button type="button" id="talkButton" class="talk">Hold to talk</button>
-      <p class="hint">Heard: <span id="heard">—</span></p>
-    </section>
-
-    <section id="panel-sign" class="panel" role="tabpanel" aria-label="Sign mode" tabindex="0" hidden>
-      <p class="hint">Sign mode: hold your hand up to the camera and hold a pose steady for about a second.
-        These are simple pose shortcuts, not full sign language yet — full Nigerian Sign Language recognition is on the roadmap.</p>
-      <div class="camera-row">
-        <button type="button" id="cameraButton" aria-expanded="false">Start camera</button>
-        <p id="poseStatus" role="status" class="hint">Camera is off.</p>
-      </div>
-      <div id="cameraView" class="camera-view" hidden>
-        <video id="camVideo" playsinline muted></video>
-        <canvas id="camCanvas" aria-hidden="true"></canvas>
-      </div>
-      <ul class="pose-legend" aria-label="Pose shortcuts">
-        <li><strong>Fist</strong> — official information</li>
-        <li><strong>1 finger</strong> — voter registration</li>
-        <li><strong>2 fingers</strong> — PVC collection</li>
-        <li><strong>3 fingers</strong> — find polling unit</li>
-        <li><strong>4 fingers</strong> — election results</li>
-        <li><strong>5 fingers</strong> — spot fake messages</li>
-      </ul>
-      <p class="hint">No camera? Use the buttons below — each one asks a question directly.</p>
-      <div id="signChips" class="chips"></div>
-    </section>
-
-    <section aria-labelledby="answerHeading" class="answer-wrap">
-      <h2 id="answerHeading">Answer</h2>
-      <div id="answer" aria-live="polite" aria-atomic="true">
-        <p class="hint">No question asked yet.</p>
       </div>
     </section>
 
-    <section aria-labelledby="browseHeading">
-      <h2 id="browseHeading">Browse all approved questions</h2>
-      <ol id="faqList" class="faq-list"></ol>
+    <section aria-label="Conversation">
+      <div id="thread" class="thread" aria-live="polite" aria-atomic="false">
+        <div class="msg agent">
+          <p><strong>Wazobia:</strong> Ask me about registration, PVCs, voting day, results, or safety. Type, speak, or sign — I answer from verified sources, and I say so when I don't know.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="composer" aria-label="Talk to Wazobia">
+      <nav class="tabs" aria-label="Input modes">
+        <button type="button" class="tab is-active" data-tab="ask" aria-controls="panel-ask" aria-selected="true"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="4" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4 7h1.5M7 7h1.5M10 7h1.5M4 10h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Type</button>
+        <button type="button" class="tab" data-tab="voice" aria-controls="panel-voice" aria-selected="false"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="6" y="1.5" width="4" height="7" rx="2" fill="currentColor"/><path d="M4 7.5a4 4 0 0 0 8 0M8 11.5v2.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Speak</button>
+        <button type="button" class="tab" data-tab="sign" aria-controls="panel-sign" aria-selected="false"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="4.5" width="13" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8.5" r="2.4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>Sign</button>
+      </nav>
+
+      <section id="panel-ask" class="panel" role="tabpanel" aria-label="Type your question" tabindex="0">
+        <form id="askForm">
+          <label for="question" class="visually-hidden">Ask Wazobia</label>
+          <div class="ask-row">
+            <input id="question" name="question" type="text" autocomplete="off"
+                   placeholder="Ask Wazobia… e.g. I no get PVC, I fit vote?">
+            <button type="submit"><svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M14 2L9.8 14l-2-5.8L2 6.2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>Ask</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="panel-voice" class="panel" role="tabpanel" aria-label="Speak your question" tabindex="0" hidden>
+        <p id="voiceStatus" class="hint" role="status">Press and hold the button, speak your question, then release.</p>
+        <button type="button" id="talkButton" class="talk">Hold to talk</button>
+        <p class="hint">Heard: <span id="heard">—</span></p>
+      </section>
+
+      <section id="panel-sign" class="panel" role="tabpanel" aria-label="Sign mode" tabindex="0" hidden>
+        <p class="hint">Hold a pose steady for a second: fist, pointing, victory, open palm, or 3–4 fingers.</p>
+        <div class="camera-row">
+          <button type="button" id="cameraButton" aria-expanded="false">Start camera</button>
+          <p id="poseStatus" role="status" class="hint">Camera is off.</p>
+        </div>
+        <div id="cameraView" class="camera-view" hidden>
+          <video id="camVideo" playsinline muted></video>
+          <canvas id="camCanvas" aria-hidden="true"></canvas>
+        </div>
+        <details class="teach">
+          <summary>Teach my hands (33 letters &amp; digits)</summary>
+          <p class="hint">Perform a letter in front of the camera and I will learn its shape, so I can fingerspell it back. Team-recorded drafts, pending signer review.</p>
+          <div class="teach-row">
+            <label class="setting" for="teachLetter">Letter
+              <select id="teachLetter"></select>
+            </label>
+            <button type="button" id="teachButton">Teach this letter</button>
+            <button type="button" id="exportShapes">Export shapes</button>
+          </div>
+          <p id="teachStatus" role="status" class="hint">No teaching in progress.</p>
+          <p id="libStatus" class="hint">0 of 33 hand shapes taught.</p>
+        </details>
+      </section>
     </section>
   </main>
 
   <footer class="site-footer">
     <div class="wrap">
-      <p><strong>About these answers:</strong> questions come from the hackathon starter data (English and Pidgin).
-        Answers are team drafts and are <strong>not verified against official INEC publications</strong>.
-        Always confirm with an official INEC channel before acting. Hausa, Yoruba, and Igbo translations are pending native-speaker review.</p>
-      <p>Independent civic prototype. No INEC endorsement is implied.</p>
+      <p>Team drafts, not verified against official INEC publications — always confirm with an official INEC channel. Independent civic prototype.</p>
+      <p class="build">build 7</p>
     </div>
   </footer>
 
-  <script type="module" src="app.mjs"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module" src="app.mjs?v=7"></script>
 </body>
 </html>

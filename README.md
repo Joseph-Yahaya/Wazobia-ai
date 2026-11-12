@@ -27,6 +27,9 @@ voter is invited in.
 
 ## Status
 
-Working prototype in progress: text + voice Q&A and camera pose shortcuts run
-today. Hausa/Yoruba/Igbo translations, signer-recorded answer videos, and full
-NSL recognition are next (see `web/README.md`).
+Working prototype in progress. Runs today: text Q&A (local retrieval, or
+Gemini AI answering when a key is set), voice in/out (browser, or Spitch AI
+voices in 5 languages when a key is set), and camera hand-pose shortcuts.
+Next: NSL sign classifier trained on public data, Hausa/Yoruba/Igbo answer
+translations with native-speaker sign-off, signer-recorded answer videos,
+and submission docs (see `web/README.md`).

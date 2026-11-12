@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { classifyPose } from "../pose.mjs";
+import { classifyPose, gestureToPose } from "../pose.mjs";
 
 // Synthetic hand: wrist at bottom, joints positioned so extended fingers
 // reach upward and curled fingers stay near the palm.
@@ -71,5 +71,23 @@ describe("pose classifier", () => {
     assert.equal(classifyPose(null), null);
     assert.equal(classifyPose([]), null);
     assert.equal(classifyPose([{ x: 0, y: 0 }]), null);
+  });
+});
+
+describe("gesture shortcuts", () => {
+  it("maps matching canned gestures to intents", () => {
+    assert.equal(gestureToPose("Closed_Fist").faqId, "FAQ-016");
+    assert.equal(gestureToPose("Pointing_Up").faqId, "FAQ-001");
+    assert.equal(gestureToPose("Victory").faqId, "FAQ-003");
+    assert.equal(gestureToPose("Open_Palm").faqId, "FAQ-015");
+  });
+
+  it("leaves other gestures unassigned, never guessed", () => {
+    assert.equal(gestureToPose("Thumb_Up"), null);
+    assert.equal(gestureToPose("Thumb_Down"), null);
+    assert.equal(gestureToPose("ILoveYou"), null);
+    assert.equal(gestureToPose("None"), null);
+    assert.equal(gestureToPose("Wave"), null);
+    assert.equal(gestureToPose(null), null);
   });
 });

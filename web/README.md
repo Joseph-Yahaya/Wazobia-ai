@@ -7,31 +7,68 @@ Inclusive and Multilingual Civic Tech** (problem statements 3A + 3C).
 
 ```sh
 cd web
+npm install   # once: installs the Spitch voice SDK
 npm start
 ```
 
-Then open **http://localhost:8787** in a browser. No build step, no API keys,
-no database. Node 22.12+ required (check with `node --version`).
+Then open **http://localhost:8787** in a browser. Node 22.12+ required
+(check with `node --version`).
 
 ```sh
-npm test   # retrieval tests + pose-classifier tests
+npm test   # retrieval + pose-classifier + AI-gating tests
 ```
+
+## AI setup (optional, unlocks the AI engines)
+
+Without keys the app still works fully offline (local retrieval, browser
+voice, camera poses). With keys it upgrades to AI answering and
+multilingual AI voices:
+
+1. Copy `.env.example` to `.env` (never commit `.env`).
+2. Get a free key from [Google AI Studio](https://aistudio.google.com/)
+   → `GEMINI_API_KEY`. Enables the ears (transcribe + detect language,
+   mixed input included), the brain (AI answering over the approved FAQs),
+   and reply translation.
+3. Get a key from your [Spitch dashboard](https://spitch.app/)
+   → `SPITCH_API_KEY`. Enables AI speech in English, Pidgin, Hausa,
+   Yoruba, and Igbo (voices: Lucy, Justice, Amina, Sade, Ngozi).
+4. Restart `npm start`. The startup line reports `gemini:on/off spitch:on/off`.
+
+There is no language selector: the agent detects the language of each
+message and replies in kind.
+
+Every answer carries a source badge — "Approved FAQ" or "AI answer from
+approved FAQs" — so users always know who wrote what. AI answers are
+constrained to cited corpus passages; anything uncited is refused.
 
 ## What works in this build
 
-- **Type a question** in English or Pidgin. Answers come only from the approved
-  FAQ corpus (`data/faq.json`, 20 questions) with a citation per answer. If no
-  FAQ matches with enough evidence, the app says it does not know instead of
-  guessing. This is how we meet the track's zero-hallucination rule.
-- **Speak mode**: hold-to-talk voice input (browser speech recognition) and a
-  "Read this answer aloud" button on every answer, for blind and low-vision
-  users. Falls back gracefully where the browser has no speech support.
-- **Sign mode**: real camera hand tracking (MediaPipe, on-device). Hold a pose
-  steady for about a second — fist, or 1–5 fingers — and the matching voter
-  answer appears with its citation. A hand skeleton draws over your video so
-  you can see what it sees. Works with no Python, Docker, or downloads; needs
-  internet once to fetch the tracking model, plus a camera. These are pose
-  shortcuts, honestly labelled — not full sign language yet.
+- **Agent first**: Wazobia is a realistic 3D avatar (three.js, local GLB) with
+  visible states — breathing idle, lean-in listening, head-tilt thinking,
+  nodding speech, performer sway while signing — plus a 2D figure as automatic
+  fallback, a slim conversation thread, and one input bar for type/speak/sign. The 20 FAQs are purely the
+  background verifier: answers are based on them, but they never appear as
+  links in the UI.
+- **Type a question** in English, Pidgin, Hausa, Yoruba, or Igbo, mixed or
+  not. The language is detected per message. Answers come only from the approved
+  FAQ corpus (`data/faq.json`, 20 questions) with a citation and source badge
+  per answer. If no FAQ matches with enough evidence, the agent says it does
+  not know instead of guessing. This is how we meet the track's
+  zero-hallucination rule.
+- **Speak mode**: hold-to-talk voice input (Gemini transcription with language
+  detection when keyed, else browser speech recognition) and a "Read aloud"
+  button on every answer, for blind and low-vision users.
+- **Sign mode**: real camera hand tracking (MediaPipe GestureRecognizer,
+  on-device, with hand-tracking fallback). Hold a pose steady for about a
+  second — fist, pointing, victory, open palm, or 3–4 fingers — and the
+  matching voter answer appears as a chat reply. A hand skeleton draws over
+  your video so you can see what it sees. Unassigned gestures are shown, never
+  guessed.
+- **Teach my hands**: perform any of 33 letters/digits (A–Y except J/Z, 1–9)
+  in front of the camera and the app records its shape into a local library
+  (team-recorded, flagged for signer review). Every answer's "Show signs"
+  button makes the avatar fingerspell its key term (e.g. "PVC") on the signing
+  stage — only from taught shapes; untaught letters are named, never faked.
 - **Display access**: language selector (EN + Pidgin now; Hausa/Yoruba/Igbo
   slots reserved pending native-speaker review), high-contrast mode, large-text
   mode, skip link, landmarks, screen-reader live answer region, keyboard
@@ -44,10 +81,14 @@ npm test   # retrieval tests + pose-classifier tests
 - Answers are **team drafts, not verified against official INEC publications**.
   They are deliberately dateless and procedural. Official review is required
   before anyone relies on them.
-- Hausa, Yoruba, and Igbo questions/answers are **not shipped yet**; the UI
-  falls back to English and says so. Native-speaker translation + sign-off is
-  part of the plan, per the track brief.
+- Hausa, Yoruba, and Igbo answers are **AI translations of verified English
+  answers**, labelled as such in the UI. Native-speaker translation + sign-off
+  is part of the plan, per the track brief.
+- Fingerspelling covers **key terms only**, from team-recorded shapes pending
+  native-signer review — not sentence-level NSL. Full recognition (custom
+  classifier on NSL data) and recorded signer videos are the sprint plan.
+- The signing stage performs shapes from your browser's local library; use
+  Export to back it up or share with a reviewer.
 - Camera mode needs a camera, a supporting browser (Chrome/Edge), and internet
   for the first load. Every other mode works without it.
-- Voice input needs a browser with speech recognition (Chrome/Edge) and a
-  microphone; everything else works without it.
+- Voice input needs a microphone; everything else works without it.
