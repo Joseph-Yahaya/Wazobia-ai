@@ -41,6 +41,19 @@ Every answer carries a source badge — "Approved FAQ" or "AI answer from
 approved FAQs" — so users always know who wrote what. AI answers are
 constrained to cited corpus passages; anything uncited is refused.
 
+## Deploy to Railway
+
+1. Push `main` to GitHub (Railway redeploys on every push once connected).
+2. In Railway: New Project → Deploy from GitHub repo → select this repo.
+3. Service Settings → set **Root Directory** to `web` (the Node app lives there).
+4. Variables tab → add `GEMINI_API_KEY`, `SPITCH_API_KEY`, and
+   `GEMINI_MODEL=gemini-3.5-flash`. Never commit `.env`.
+5. Deploy, then Settings → Networking → Generate Domain, and open the URL.
+6. On the page: header dot should read "AI online". Ask a question to confirm.
+
+The server binds `0.0.0.0` and reads `PORT` from the environment, so it runs
+unchanged on Railway and locally.
+
 ## What works in this build
 
 - **Agent first**: Wazobia is a realistic 3D avatar (three.js, local GLB) with
