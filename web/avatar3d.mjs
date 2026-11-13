@@ -53,6 +53,7 @@ export function classifyRig(nodeNames) {
     shoulderR: find((n) => base(n) === "shoulder" && isR(n)),
     shoulderL: find((n) => base(n) === "shoulder" && sideOf(n) === "L"),
     armR: find((n) => base(n) === "arm" && isR(n)),
+    armL: find((n) => base(n) === "arm" && sideOf(n) === "L"),
     foreArmR: find((n) => /fore/.test(base(n)) && isR(n)),
     handR: find((n) => base(n) === "hand" && isR(n)),
     handL: find((n) => base(n) === "hand" && sideOf(n) === "L"),
@@ -101,17 +102,19 @@ function tryAutoPose(THREE, model, clips, joints) {
   }
 }
 
-// Lower both arms until the hands hang near the hips. Self-calibrating:
+// Lower both arms until the hands hang at the body's sides. Self-calibrating:
 // probes each local axis to find the one that moves the hand down, then
-// descends in small measured steps. Never guesses a rotation direction,
-// so it works on any bind pose or clip sample.
+// descends to the bottom of the swing (not just the first touch of the
+// target height, which leaves arms held out wide). Never guesses a rotation
+// direction, so it works on any bind pose or clip sample. Rotates the
+// upper-arm bone when the rig has one, else the shoulder/clavicle.
 export function lowerArms(THREE, model, joints, sizeY = 1.7) {
-  const report = { skipped: null, stepsL: 0, stepsR: 0, y0: [], y1: [], target: 0 };
+  const report = { skipped: null, stepsL: 0, stepsR: 0, y0: [], y1: [], target: 0, pivots: [] };
   const pairs = [
-    [joints.shoulderL, joints.handL, "L"],
-    [joints.shoulderR, joints.handR, "R"],
+    [joints.armL || joints.shoulderL, joints.handL, "L", joints.armL ? "arm" : "shoulder"],
+    [joints.armR || joints.shoulderR, joints.handR, "R", joints.armR ? "arm" : "shoulder"],
   ];
-  if (!joints.hips || pairs.some(([s, h]) => !s || !h)) {
+  if (!joints.hips || pairs.some(([p, h]) => !p || !h)) {
     report.skipped = "joints";
     return report;
   }
@@ -121,8 +124,9 @@ export function lowerArms(THREE, model, joints, sizeY = 1.7) {
     report.target = +target.toFixed(3);
     const eps = sizeY * 0.0008;
     const v = new THREE.Vector3();
-    for (const [shoulder, hand, side] of pairs) {
-      const start = { x: shoulder.rotation.x, y: shoulder.rotation.y, z: shoulder.rotation.z };
+    for (const [pivot, hand, side, label] of pairs) {
+      report.pivots.push(label);
+      const start = { x: pivot.rotation.x, y: pivot.rotation.y, z: pivot.rotation.z };
       model.updateMatrixWorld(true);
       const startY = hand.getWorldPosition(v).y;
       report.y0.push(+startY.toFixed(3));
@@ -134,14 +138,14 @@ export function lowerArms(THREE, model, joints, sizeY = 1.7) {
       let dir = 1;
       let bestRate = sizeY * 0.0004;
       for (const ax of ["x", "y", "z"]) {
-        const orig = shoulder.rotation[ax];
-        shoulder.rotation[ax] = orig + 0.1;
+        const orig = pivot.rotation[ax];
+        pivot.rotation[ax] = orig + 0.1;
         model.updateMatrixWorld(true);
         const yPlus = hand.getWorldPosition(v).y;
-        shoulder.rotation[ax] = orig - 0.1;
+        pivot.rotation[ax] = orig - 0.1;
         model.updateMatrixWorld(true);
         const yMinus = hand.getWorldPosition(v).y;
-        shoulder.rotation[ax] = orig;
+        pivot.rotation[ax] = orig;
         if (yMinus - yPlus > bestRate) { bestRate = yMinus - yPlus; axis = ax; dir = 1; }
         if (yPlus - yMinus > bestRate) { bestRate = yPlus - yMinus; axis = ax; dir = -1; }
       }
@@ -150,20 +154,19 @@ export function lowerArms(THREE, model, joints, sizeY = 1.7) {
         continue;
       }
       let bestY = startY;
-      let bestAngle = shoulder.rotation[axis];
+      let bestAngle = pivot.rotation[axis];
       let bad = 0;
       let steps = 0;
       for (let i = 0; i < 30; i++) {
-        shoulder.rotation[axis] += dir * 0.08;
-        if (Math.abs(shoulder.rotation[axis] - start[axis]) > 1.7) break;
+        pivot.rotation[axis] += dir * 0.08;
+        if (Math.abs(pivot.rotation[axis] - start[axis]) > 1.7) break;
         model.updateMatrixWorld(true);
         const y = hand.getWorldPosition(v).y;
         steps++;
-        if (y <= target) { bestAngle = shoulder.rotation[axis]; bestY = y; break; }
-        if (y < bestY - eps) { bestY = y; bestAngle = shoulder.rotation[axis]; bad = 0; }
+        if (y < bestY - eps) { bestY = y; bestAngle = pivot.rotation[axis]; bad = 0; }
         else if (++bad >= 3) break;
       }
-      shoulder.rotation[axis] = bestAngle;
+      pivot.rotation[axis] = bestAngle;
       report["steps" + side] = steps;
       report.y1.push(+bestY.toFixed(3));
     }
@@ -242,6 +245,8 @@ async function start(canvas, modelUrl) {
   const poseReport = lowerArms(THREE, model, {
     shoulderL: bone(rig.shoulderL),
     shoulderR: bone(rig.shoulderR),
+    armL: bone(rig.armL),
+    armR: bone(rig.armR),
     handL: bone(rig.handL),
     handR: bone(rig.handR),
     hips: bone(rig.hips),

@@ -100,6 +100,52 @@ describe("lowerArms", () => {
     assert.notEqual(r.shR.rotation.z, 0);
   });
 
+  it("lowers past first target touch to fully hanging arms", () => {
+    // Regression: stopping at the first touch of the target height leaves
+    // arms held out wide. The descent must continue to the swing bottom.
+    const r = rig([0.55, 0, 0]);
+    lowerArms(fakeTHREE, r.root, {
+      shoulderL: r.shL,
+      shoulderR: r.shR,
+      handL: r.handL,
+      handR: r.handR,
+      hips: r.hips,
+    });
+    r.root.updateMatrixWorld();
+    // Swing bottom is shoulder height (1.45) minus arm length (0.55) = 0.90.
+    assert.ok(handY(r.handL) <= 1.0, `left hand at ${handY(r.handL)}`);
+    assert.ok(handY(r.handR) <= 1.0, `right hand at ${handY(r.handR)}`);
+  });
+
+  it("rotates the upper-arm bone when present, leaving shoulders alone", () => {
+    const r = rig([0.55, 0, 0]);
+    const armL = new FakeNode("LeftArm", 0, 0, 0);
+    const armR = new FakeNode("RightArm", 0, 0, 0);
+    r.shL.children.length = 0;
+    r.shR.children.length = 0;
+    r.shL.add(armL);
+    armL.add(r.handL);
+    r.shR.add(armR);
+    armR.add(r.handR);
+    const report = lowerArms(fakeTHREE, r.root, {
+      shoulderL: r.shL,
+      shoulderR: r.shR,
+      armL,
+      armR,
+      handL: r.handL,
+      handR: r.handR,
+      hips: r.hips,
+    });
+    r.root.updateMatrixWorld();
+    assert.deepEqual(report.pivots, ["arm", "arm"]);
+    assert.equal(r.shL.rotation.z, 0);
+    assert.equal(r.shR.rotation.z, 0);
+    assert.notEqual(armL.rotation.z, 0);
+    assert.notEqual(armR.rotation.z, 0);
+    assert.ok(handY(r.handL) <= 1.0, `left hand at ${handY(r.handL)}`);
+    assert.ok(handY(r.handR) <= 1.0, `right hand at ${handY(r.handR)}`);
+  });
+
   it("leaves already-hanging arms alone", () => {
     const r = rig([0.05, -0.55, 0]);
     lowerArms(fakeTHREE, r.root, {

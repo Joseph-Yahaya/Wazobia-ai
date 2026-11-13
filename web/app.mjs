@@ -1,6 +1,6 @@
-import { initAvatar3D } from "./avatar3d.mjs?v=7";
-import { buildIndex, ask } from "./retrieval.mjs?v=7";
-import { classifyPose, gestureToPose } from "./pose.mjs?v=7";
+import { initAvatar3D } from "./avatar3d.mjs?v=8";
+import { buildIndex, ask } from "./retrieval.mjs?v=8";
+import { classifyPose, gestureToPose } from "./pose.mjs?v=8";
 import {
   SUPPORTED_CHARS,
   termFor,
@@ -9,7 +9,7 @@ import {
   averageShapes,
   validateLibrary,
   missingLetters,
-} from "./fingerspell.mjs?v=7";
+} from "./fingerspell.mjs?v=8";
 
 const DON_T_KNOW =
   "I don't have a verified answer for that. Please check an official INEC channel or ask about registration, PVCs, voting day, results, or safety.";
@@ -814,35 +814,22 @@ function reportAiStatus() {
   el.classList.toggle("off", !(g || v));
 }
 
-// Realistic 3D avatar: canvas shows immediately (no 2D→3D flash), 2D figure
-// returns only if 3D actually fails.
-$("avatarSvg").style.display = "none";
-$("avatarCanvas").hidden = false;
-$("avatarCanvas").style.display = "block";
-setAvatar("idle", "Waking up…");
+// Realistic 3D avatar. The HTML defaults to canvas-visible/SVG-hidden, so the
+// 2D figure can never flash on any paint — it returns only if 3D fails.
 initAvatar3D($("avatarCanvas"), {
-  modelUrl: "models/avatar.glb",
+  modelUrl: "models/avatar.glb?v=8",
   onError: (msg) => addNotice(`${msg} — using the 2D figure instead.`),
 }).then((ctrl) => {
   if (!ctrl) {
     $("avatarCanvas").hidden = true;
-    $("avatarCanvas").style.display = "none";
     $("avatarSvg").hidden = false;
-    $("avatarSvg").style.display = "";
     setAvatar("idle", "Ready. Ask me about voting.");
     return;
   }
   avatar3d = ctrl;
-  $("avatarSvg").hidden = true;
-  $("avatarSvg").style.display = "none";
+  $("avatarCanvas").classList.add("ready");
   setAvatar("idle", "Ready. Ask me about voting.");
-  // TEMPORARY diagnostic: proves what the arms routine measured. Remove next turn.
-  if (ctrl.report) {
-    const r = ctrl.report;
-    addNotice(r.skipped
-      ? `3D rig check: arms skipped (${r.skipped}).`
-      : `3D rig check: hands ${r.y0.join("/")}→${r.y1.join("/")} target ≤${r.target} in L${r.stepsL}/R${r.stepsR} steps.`);
-  }
+  if (ctrl.report) console.debug("3D arms report:", ctrl.report);
 });
 
 

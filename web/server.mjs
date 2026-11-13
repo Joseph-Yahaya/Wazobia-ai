@@ -193,8 +193,11 @@ const server = createServer(async (req, res) => {
     if (!file.startsWith(root)) return send(res, 403, "forbidden", "text/plain");
     const data = await readFile(file);
     const type = MIME[extname(file)] || "application/octet-stream";
-    // Dev: never cache app files, so a plain refresh always shows the latest build.
-    res.writeHead(200, { "content-type": type, "cache-control": "no-store" });
+    // App files: never cached, so a plain refresh always shows the latest
+    // build. The versioned avatar model (?v=N in its URL): immutable, so
+    // reloads never re-download the 5.6 MB file.
+    const cache = extname(file) === ".glb" ? "public, max-age=31536000, immutable" : "no-store";
+    res.writeHead(200, { "content-type": type, "cache-control": cache });
     return res.end(data);
   } catch (err) {
     if (!res.headersSent) send(res, err.message === "body too large" ? 413 : 500, JSON.stringify({ error: "server error" }));

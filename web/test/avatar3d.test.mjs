@@ -44,7 +44,7 @@ describe("classifyRig", () => {
     assert.deepEqual(classifyRig([]), {
       head: null, neck: null, hips: null, spine: null,
       shoulderR: null, armR: null, foreArmR: null, handR: null, handL: null,
-      shoulderL: null,
+      shoulderL: null, armL: null,
     });
     assert.equal(classifyRig(null).head, null);
   });
@@ -52,6 +52,7 @@ describe("classifyRig", () => {
   it("finds the left hand and shoulder for pose scoring", () => {
     assert.equal(classifyRig(OURS).handL, "LeftHand");
     assert.equal(classifyRig(OURS).shoulderL, "LeftShoulder");
+    assert.equal(classifyRig(OURS).armL, "LeftArm");
   });
 
   it("scores natural standing above crouches and raised hands", () => {

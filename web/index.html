@@ -6,7 +6,7 @@
   <title>Wazobia — your voter-info agent</title>
   <meta name="description" content="Wazobia is an accessible voter-information agent: ask by typing, speaking, or signing. Answers come only from verified sources. AI4Elections Hackathon, Track 3.">
   <!-- Asset versions: bump ?v=N + footer build stamp together each release. -->
-  <link rel="stylesheet" href="styles.css?v=7">
+  <link rel="stylesheet" href="styles.css?v=8">
 </head>
 <body>
   <a class="skip" href="#main">Skip to main content</a>
@@ -28,7 +28,7 @@
   <main id="main" class="wrap">
     <section class="stage" aria-label="Wazobia agent">
       <div id="avatar" class="avatar" data-state="idle">
-        <svg id="avatarSvg" viewBox="0 0 200 300" role="img" aria-label="Wazobia agent avatar">
+        <svg id="avatarSvg" viewBox="0 0 200 300" role="img" aria-label="Wazobia agent avatar" hidden>
           <ellipse cx="100" cy="284" rx="46" ry="9" class="av-shadow"/>
           <ellipse cx="100" cy="150" rx="72" ry="112" class="av-halo" fill="none" stroke-width="4"/>
           <g class="av-body">
@@ -60,9 +60,9 @@
             </g>
           </g>
         </svg>
-        <canvas id="avatarCanvas" width="600" height="800" hidden></canvas>
+        <canvas id="avatarCanvas" width="600" height="800"></canvas>
       </div>
-      <p id="agentStatus" class="agent-status" role="status">Ready. Ask me about voting.</p>
+      <p id="agentStatus" class="agent-status" role="status">Waking up…</p>
       <ol id="pipeline" class="pipeline" aria-label="Answer progress">
         <li data-stage="ears">Ears</li>
         <li data-stage="brain">Brain</li>
@@ -140,7 +140,7 @@
   <footer class="site-footer">
     <div class="wrap">
       <p>Team drafts, not verified against official INEC publications — always confirm with an official INEC channel. Independent civic prototype.</p>
-      <p class="build">build 7</p>
+      <p class="build">build 8</p>
     </div>
   </footer>
 
@@ -152,6 +152,6 @@
       }
     }
   </script>
-  <script type="module" src="app.mjs?v=7"></script>
+  <script type="module" src="app.mjs?v=8"></script>
 </body>
 </html>

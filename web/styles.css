@@ -198,13 +198,11 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
   height: auto;
   display: block;
   margin: 0 auto;
-  animation: rise 0.7s ease-out;
+  opacity: 0;
+  transition: opacity 0.45s ease-out;
 }
 
-@keyframes rise {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: none; }
-}
+#avatarCanvas.ready { opacity: 1; }
 
 .avatar svg[hidden],
 #avatarCanvas[hidden] {
@@ -324,10 +322,10 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 .agent-status {
   position: relative;
   margin: 0.6rem 0 0;
-  font-size: 1.25rem;
-  font-weight: 800;
+  font-size: 1rem;
+  font-weight: 600;
   letter-spacing: 0.01em;
-  color: var(--gold-bright);
+  color: var(--stage-ink);
 }
 
 /* Signing overlay: the avatar's hands, shown only while signing */
